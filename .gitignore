@@ -1,0 +1,28 @@
+# Node modules (any subfolder)
+**/node_modules/
+
+# Env files (any subfolder) — keep .env.example tracked
+**/.env
+**/.env.*
+!**/.env.example
+
+# TypeScript build artifacts
+**/dist/
+**/build/
+**/*.tsbuildinfo
+
+# Logs
+**/*.log
+**/logs/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.code-workspace
+
+# Next.js outputs anywhere in the repo
+**/.next/
+**/out/
+**/.vercel/

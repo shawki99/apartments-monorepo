@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 @Entity({ name: "apartments" })
 export class Apartment {
@@ -15,7 +21,7 @@ export class Apartment {
   project!: string;
 
   @Column("decimal", { precision: 12, scale: 2 })
-  price!: string; // keep as string (TypeORM decimal); you can cast on read
+  price!: string;
 
   @Column({ length: 80, default: "Cairo" })
   city!: string;
