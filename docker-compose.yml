@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: apartments-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: apartments
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d apartments"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - apartments-network
+
+  # Backend Service (Development)
+  backend:
+    container_name: apartments-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - DATABASE_URL=postgresql://user:password@postgres:5432/apartments
+      - CORS_ORIGIN=http://localhost:3000
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apartments-network
+    volumes:
+      - ./backend:/app:rw
+      - /app/node_modules
+    profiles:
+      - dev
+
+  # Frontend Service (Development)
+  frontend:
+    container_name: apartments-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://backend:4000
+      - PORT=3000
+      - CHOKIDAR_USEPOLLING=1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - apartments-network
+    volumes:
+      - ./frontend:/app:rw
+      - /app/node_modules
+      - /app/.next
+    profiles:
+      - dev
+
+  # Backend Service (Production)
+  backend-prod:
+    container_name: apartments-backend-prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DATABASE_URL=postgresql://user:password@postgres:5432/apartments
+      - CORS_ORIGIN=http://frontend-prod:3000
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apartments-network
+    profiles:
+      - prod
+
+  # Frontend Service (Production)
+  frontend-prod:
+    container_name: apartments-frontend-prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend-prod:4000
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-prod
+    networks:
+      - apartments-network
+    profiles:
+      - prod
+
+volumes:
+  postgres_data:
+
+networks:
+  apartments-network:
+    driver: bridge
